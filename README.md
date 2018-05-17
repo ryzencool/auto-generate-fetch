@@ -41,3 +41,5 @@
     }
     ```
 * 生成的文件为同级目录下index.js
+
+* 如果你想打包成可执行文件，可以使用pyinstaller -w -F -p . fetch.py
