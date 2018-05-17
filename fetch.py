@@ -1,12 +1,8 @@
-
 import requests
 import json
 from string import Template
 import os
 
-# 我应该从文件中读取到我的信息，然后cookie存储在文件中， 然后每次从文件中读取cookie，失败的时候才去重新登录，需要输入验证码
-
-# 还有就是连接失败的情况下，会读取文件，然后重新获取cookie登录，然后再把bookie存进去
 username = ""
 
 password = ""
@@ -58,7 +54,7 @@ def check_key_file():
                 f_read_json = json.loads(f_read)
                 username = f_read_json['username']
                 password = f_read_json['password']
-    print("用户%s进入登录状态" % username)
+    print("用户%s即将开始登录" % username)
     return username, password
 
 # 递归判断输入错误重试
@@ -114,27 +110,30 @@ def generate_request_method(inf, url):
     des = inf["description"]
     method_name = ''
     res = ''
-    print(des)
-    if des is None or des is "" or des['description']['method'] == None:
-        raise RuntimeError("该接口描述书写错误")
-    if des is not None and des is not "" and 'method' in des:
-        print(des)
-        des = json.loads(des)
-        print(des)
+    des = json.loads(des)
+    if des is None or des is "" or des['method'] == None:
+        print("----------------------------<%s> 接口中描述填写不正确,请检查后重新运行脚本----------------------------", url)
+        os._exit(1)
+    else:
         method_name = des['method']
-        if inf['method'] == "GET" and '/' in inf['url'] and '/' is not inf['url']:
-            res = Template(template_get).substitute(
-                method=des['method'], url=url)
-        # if inf['method'] == "POST":
-        #     if des['type'] == 'form':
-        #         res = Template(template_post_form).substitute(
-        #             method=des['method'], url=url)
-        #     elif des['type'] == 'json':
-        #         res = Template(template_post_json).substitute(
-        #             method=des['method'], url=url)
-
-            # else:
-            #     raise RuntimeError('rap2中未定义好post请求的content-type类型')
+        if 'tran' in des and des['tran'] == 'ws':
+            # 这里处理websocket请求
+            pass
+        else:
+            if inf['method'] == "GET":
+                res = Template(template_get).substitute(
+                    method=des['method'], url=url)
+            if inf['method'] == "POST":
+                if des['type'] == 'form':
+                    res = Template(template_post_form).substitute(
+                        method=des['method'], url=url)
+                elif des['type'] == 'json':
+                    res = Template(template_post_json).substitute(
+                        method=des['method'], url=url)
+                else:
+                    print(
+                        '----------------------------error:<%s>中content-type类型未定义,请检查后重新运行脚本----------------------------' % url)
+                    os._exit(1)
     return res
 
 # 如果当前的代码中有更新，会不动当前的代码，如果没有更新就会替换掉，基于方法的检测。
@@ -158,19 +157,23 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36',
     'Connection': 'Keep-Alive'
 }
-print("username is %s and password is %s" % (username, password))
+
 login_req = requests.post(login_url, {'email': username,
                                       'password': password, 'captcha': captcha}, cookies=cookies, headers=headers)
+repo_info_json = {}
 
-repo_info_json = requests.get(repo_url, cookies=cookies).json()
-
+try:
+    repo_info_json = requests.get(repo_url, cookies=cookies).json()
+except Exception:
+    print("----------------------------error:验证码错误，请重新运行当前脚本!!!----------------------------")
+    os._exit(1)
 project_list = []
 
 # 获取项目
-print("\n< 属于你的所有项目 >\n")
+print("\n----------------------------属于你的所有项目----------------------------\n")
 for repo in repo_info_json['data']:
     project_list.append(repo['id'])
-    print(" - [%s] %s" % (repo['id'], repo['name']))
+    print(" * [%s] %s" % (repo['id'], repo['name']))
 
 # 输入项目id
 print("\n请输入你想导入的项目id：")
@@ -191,10 +194,8 @@ for mod in mods:
         request_res = generate_request_method(inf, inf['url'])
         comment_res = genereate_comment(inf['properties'])
         agg_res = comment_res + request_res
-        # 在这里循环写入模板
-        if '/' in inf['url']:
-            final_res = final_res + agg_res
+        final_res = final_res + agg_res
 with open('index.js', 'w') as f:
     f.write(final_res)
 
-print("生成项目成功")
+print("\n----------------------------生成项目成功----------------------------")
