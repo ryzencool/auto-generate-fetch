@@ -44,6 +44,7 @@ def check_key_file():
             username = input()
             print("请输入你的密码：")
             password = input()
+            print("用户名密码会保存在$HOME下的.fetch.json中，可前往更改")
             t = {'username': username, 'password': password}
             t_str = json.dumps(t)
             f.write(t_str)
