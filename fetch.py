@@ -34,7 +34,7 @@ template_post_json = """$method(params = "") {return base.postJson("$url", param
 
 # -------------------------------- function ----------------------------
 
-
+# 保存用户名密码，避免重复输入
 def check_key_file():
     key_file_path = os.path.join(user_home, ".fetch.json")
     if not os.path.exists(key_file_path):
@@ -59,8 +59,6 @@ def check_key_file():
     return username, password
 
 # 递归判断输入错误重试
-
-
 def input_project_id():
     project_id = input()
     if project_id in project_list_str:
@@ -70,8 +68,6 @@ def input_project_id():
         return input_project_id()
 
 # properties request 生成注释 {tpye: '', name: '', des: ''} request和response生成注释
-
-
 def genereate_comment(comm_list):
     comment_tag_request = "\n\n//request:\n"
     comment_tag_response = "//response:\n"
@@ -90,8 +86,6 @@ def genereate_comment(comm_list):
     return comment_tag_request + comment_head + comm_res_request + comment_tail + comment_tag_response + comment_head + comm_res_response + comment_tail
 
 # 拼接properties
-
-
 def property_comment(comm):
     if comm['type'] == "Number":
         s = """//\t$name : 0 // $des\n"""
