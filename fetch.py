@@ -9,19 +9,23 @@ password = ""
 
 user_home = os.getenv("HOME")
 
-index_url = "http://rap2.taobao.org/"
+index_url = "http://rap2.server.gingkoo"
+
+index_url_api = "http://rap2api.server.gingkoo"
+
+login_host = index_url_api.split("//")[1]
 
 # 验证码
-captcha_url = "http://rap2api.taobao.org/captcha?t="
+captcha_url = index_url_api + "/captcha?t="
 
 # 登录
-login_url = "http://rap2.taobao.org/account/login"
+login_url = index_url + "/account/login"
 
 # 获取所有的仓库
-repo_url = "http://rap2api.taobao.org/repository/joined?user=&name="
+repo_url = index_url + "/repository/joined?user=&name="
 
 # 指定仓库信息
-project_url = "http://rap2api.taobao.org/repository/get?id="
+project_url = index_url + "/repository/get?id="
 
 # get模板
 template_get = """$method(params = "") {return base.get("$url", params)}\n"""
@@ -55,7 +59,7 @@ def check_key_file():
                 f_read_json = json.loads(f_read)
                 username = f_read_json['username']
                 password = f_read_json['password']
-    print("用户%s即将开始登录" % username)
+    print("用户%s即将开始登录,密码为：%s， 请确认" % (username, password))
     return username, password
 
 # 递归判断输入错误重试
@@ -131,7 +135,7 @@ def generate_request_method(inf, url):
                     os._exit(1)
     return res
 
-# 如果当前的代码中有更新，会不动当前的代码，如果没有更新就会替换掉，基于方法的检测。
+# 如果当前的代码中有更新，会不动当前的代码，如果没有更新就会替换掉，基于方法的检测。基于方法的检测算的上智能吗
 
 
 # ----------------------------------逻辑 ----------------------------------
@@ -148,21 +152,32 @@ print("请输入你的验证码：")
 captcha = input()
 cookies = {c.name: c.value for c in captcha_req.cookies}
 headers = {
-    'Host': 'rap2api.taobao.org',
+    'Host': login_host,
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36',
     'Connection': 'Keep-Alive'
 }
 
+try :
 login_req = requests.post(login_url, {'email': username,
                                       'password': password, 'captcha': captcha}, cookies=cookies, headers=headers)
+except Exception:
+    print("----------------------------error:用户名，密码或者验证码错误，请重新运行当前脚本!!!----------------------------")
+     key_file_path_temp = os.path.join(user_home, ".fetch.json")
+    if os.path.exists(key_file_path_temp):
+        os.remove(key_file_path_temp)
+    else:
+        print("----------------------------error:文件不存在!!!----------------------------")
 repo_info_json = {}
 
 try:
-    repo_info_json = requests.get(repo_url, cookies=cookies).json()
+    repo_info_json = requests.get(repo_url, cookies=cookies, headers=headers).json()
 except Exception:
-    print("----------------------------error:验证码错误，请重新运行当前脚本!!!----------------------------")
+    print("----------------------------error:验证码错误，请重新运行当前脚本!!!----------------------------")    
     os._exit(1)
 project_list = []
+if repo_info_json['data'] is None or len(repo_info_json['data']) is 0:
+    print("----------------------------你还没没有加入到任何项目中----------------------------\n")
+    os._exit(1)
 
 # 获取项目
 print("\n----------------------------属于你的所有项目----------------------------\n")
@@ -177,7 +192,7 @@ project_list_str = [str(x) for x in project_list]
 project_id = input_project_id()
 
 # 获取该id的项目
-project_req = requests.get(project_url + project_id, cookies=cookies)
+project_req = requests.get(project_url + project_id, cookies=cookies,headers=header)
 
 # 该项目的模块
 mods = project_req.json()['data']['modules']
