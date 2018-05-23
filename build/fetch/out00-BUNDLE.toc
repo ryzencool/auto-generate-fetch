@@ -1,0 +1,3 @@
+([('fetch',
+   '/Users/zmy/Documents/MyGitHub/auto-generate-fetch/dist/fetch',
+   'EXECUTABLE')],)
