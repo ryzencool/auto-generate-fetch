@@ -9,9 +9,10 @@ password = ""
 
 user_home = os.getenv("HOME")
 
-index_url = "http://rap2.server.gingkoo"
+# 这里自己编写自己的公司的地址
+# index_url = ""
 
-index_url_api = "http://rap2api.server.gingkoo"
+# index_url_api = ""
 
 login_host = index_url_api.split("//")[1]
 
